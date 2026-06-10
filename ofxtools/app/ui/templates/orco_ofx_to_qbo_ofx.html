@@ -1,0 +1,27 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Bootstrap Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{% static "bootstrap/5.3.8/css/bootstrap.min.css" %}">
+  <script src="{% static "jquery/jquery-4.0.0.min.js" %}"></script>
+  <script src="{% static "bootstrap/5.3.8/js/bootstrap.min.js" %}"></script>
+</head>
+<body>
+
+<div class="container">
+  <h1>Orco bank OFX naar Quickbooks OFX</h1>
+  <p>Hieronder kun je links vinden naar pagina's om bestanden van het ene formaat te converteren naar het andere formaat.</p>
+
+    <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="myfile">
+    <button type="submit">Upload</button>
+  </form>
+
+</div>
+
+</body>
+</html>
