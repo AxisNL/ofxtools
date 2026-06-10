@@ -1,15 +1,6 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <title>Bootstrap Example</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="{% static "bootstrap/5.3.8/css/bootstrap.min.css" %}">
-  <script src="{% static "jquery/jquery-4.0.0.min.js" %}"></script>
-  <script src="{% static "bootstrap/5.3.8/js/bootstrap.min.js" %}"></script>
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block content %}
 
 <div class="container">
     <h1>Rabobank CSV naar Quickbooks OFX</h1>
@@ -22,6 +13,4 @@
   </form>
 
 </div>
-
-</body>
-</html>
+{% endblock %}

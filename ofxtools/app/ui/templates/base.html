@@ -1,0 +1,40 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>OFX Tools</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{% static "bootstrap/5.3.8/css/bootstrap.min.css" %}">
+  <script src="{% static "jquery/jquery-4.0.0.min.js" %}"></script>
+  <script src="{% static "bootstrap/5.3.8/js/bootstrap.min.js" %}"></script>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg py-3 navbar-dark bg-dark">
+	<div class="container">
+		<a class="navbar-brand" href="/">
+			OFX Tools</a>
+
+		<div class="lc-block collapse navbar-collapse" id="myNavbar2">
+			<div lc-helper="shortcode" class="live-shortcode ms-auto">
+                <!--  lc_nav_menu -->
+                <ul id="menu-menu-1" class="navbar-nav">
+                    <li class="menu-item menu-item-type-custom menu-item-object-custom nav-item nav-item-32739">
+                        <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">home</a>
+                    </li>
+                    <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home nav-item nav-item-32738">
+                        <a href="/over" class="nav-link {% if request.path == '/over' %}active{% endif %}">over</a>
+                    </li>
+                </ul> <!-- /lc_nav_menu -->
+            </div>
+
+		</div>
+	</div>
+</nav>
+<p>&nbsp;</p>
+{% block content %}
+{% endblock %}
+
+</body>
+</html>
