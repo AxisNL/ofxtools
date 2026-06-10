@@ -13,10 +13,10 @@ RUN apt-get install nginx vim curl -y --no-install-recommends
 
 # create the folder and the root CA
 RUN mkdir -p /app
-COPY ../ofxtools/start-server.sh /app/start-server.sh
+COPY start-server.sh /app/start-server.sh
 RUN chmod +x /app/start-server.sh
-COPY ../ofxtools/requirements.txt /app/requirements.txt
-COPY ../ofxtools/nginx.default /app/
+COPY requirements.txt /app/requirements.txt
+#COPY ../ofxtools/nginx.default /app/
 
 WORKDIR /app
 RUN python3 -m venv venv
@@ -24,17 +24,17 @@ RUN /app/venv/bin/pip install wheel
 RUN /app/venv/bin/pip install -r requirements.txt --retries 60
 
 # copy app
-COPY ../ofxtools/app/app /app/app
-COPY ../ofxtools/app/static /app/static
-COPY ../ofxtools/app/ui /app/ui
-COPY ../ofxtools/app/manage.py /app/manage.py
-COPY ../ofxtools/app/gunicorn.conf.py /app/gunicorn.conf.py
+COPY app/app /app/app
+COPY app/static /app/static
+COPY app/ui /app/ui
+COPY app/manage.py /app/manage.py
+COPY app/gunicorn.conf.py /app/gunicorn.conf.py
 RUN mkdir /app/db
 RUN mkdir /app/log
 
 WORKDIR /app/
 
-COPY ../ofxtools/nginx.default /etc/nginx/sites-available/default
+COPY nginx.default /etc/nginx/sites-available/default
 RUN ln -sf /dev/stdout /var/log/nginx/access.log \
     && ln -sf /dev/stderr /var/log/nginx/error.log
 
