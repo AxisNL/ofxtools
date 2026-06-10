@@ -7,7 +7,13 @@ It is a containerized Django Python web application. It's ugly code, but it work
 
 ## Using ofxtools
 
-Go to the ofxtools directory, and run:
+Just run the docker container:
+
+    docker run -it --rm -p 8000:8000 axisnl/ofxtools
+
+## Building yourself
+
+Or you can clone the repo, go to the ofxtools directory, and run:
 
     docker build -t axisnl/ofxtools .
 

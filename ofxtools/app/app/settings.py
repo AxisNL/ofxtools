@@ -156,3 +156,26 @@ LOGGING = {
         "level": "INFO",
     },
 }
+
+if 'REDIS_URL' in os.environ:
+    REDIS_URL = os.environ['REDIS_URL']
+    print("REDIS_URL", REDIS_URL)
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': REDIS_URL,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'SOCKET_CONNECT_TIMEOUT': 5,
+                'SOCKET_TIMEOUT': 5,
+                'CONNECTION_POOL_KWARGS': {
+                    'max_connections': 50,
+                    'retry_on_timeout': True
+                }
+            },
+            'KEY_PREFIX': 'ofxtools',  # Prevents key collisions
+            'TIMEOUT': 300,  # Default timeout: 5 minutes
+        }
+    }
+else:
+    print("environment variable REDIS_URL not found, using default caching (not thread safe!)")
