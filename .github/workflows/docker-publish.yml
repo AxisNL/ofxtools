@@ -33,4 +33,4 @@ jobs:
         password: ${{ secrets.DOCKERHUB_TOKEN }}
         repository: ${{ env.IMAGE_NAME }}
         short-description: ${{ github.event.repository.description }}
-        readme-filepath: ./Docker_README.md
+        readme-filepath: ./ofxtools/Docker_README.md
