@@ -125,8 +125,8 @@ def convert(source):
     if 'Productnaam' in r[0].keys():
         output = {
             "bankid": 'RABOBANK',
-            "currency": r[0]['Valuta'],
-            "accountid": r[0]['Creditcardnummer'],
+            "currency": r[0]['Munt'],
+            "accountid": r[0]['Creditcard Nummer'],
             "end_balance": 0,
             "transactions": []
         }
