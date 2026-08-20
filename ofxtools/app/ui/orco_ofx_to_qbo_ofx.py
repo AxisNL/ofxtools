@@ -1,3 +1,6 @@
+import json
+
+
 def convert(source):
     import xml.etree.ElementTree as ET
 
@@ -14,19 +17,47 @@ def convert(source):
 
     BANKTRANLIST = STMTRS.find("BANKTRANLIST")
 
-    for BANKTRANLIST_ITEM in BANKTRANLIST:
+    BANKTRANLIST_COPY = BANKTRANLIST.__copy__()
+
+    for BANKTRANLIST_ITEM in BANKTRANLIST_COPY:
+
+        skipTran = False
         if BANKTRANLIST_ITEM.tag == "STMTTRN":
 
+            for child in BANKTRANLIST_ITEM:
+                if child.tag == "MEMO":
+                    if child.text is not None:
+                        if "MCDEBIT-AUTHORIZATION REQUEST HOLD" in child.text:
+                            BANKTRANLIST.remove(BANKTRANLIST_ITEM)
+                            skipTran = True
+
+    BANKTRANLIST = BANKTRANLIST_COPY
+
+    # Quickbooks does not expect all elements, and the order is important,
+    # NAME should come before MEMO!
+    for BANKTRANLIST_ITEM in BANKTRANLIST:
+
+        skipTran = False
+        if BANKTRANLIST_ITEM.tag == "STMTTRN":
+
+            for child in BANKTRANLIST_ITEM:
+                if child.tag == "MEMO":
+                    if child.text is not None:
+                        if "MCDEBIT-AUTHORIZATION REQUEST HOLD" in child.text:
+                            BANKTRANLIST.remove(BANKTRANLIST_ITEM)
+                            skipTran = True
             # Quickbooks does not expect all elements, and the order is important,
             # NAME should come before MEMO!
 
-            for child in BANKTRANLIST_ITEM:
-                if child.tag == "OTHERAMT":
-                    BANKTRANLIST_ITEM.remove(child)
-                if child.tag == "DTAVAIL":
-                    BANKTRANLIST_ITEM.remove(child)
-            name_element = ET.Element('NAME')
-            BANKTRANLIST_ITEM.insert(5, name_element)
+            if not skipTran:
+                for child in BANKTRANLIST_ITEM:
+                    if child.tag == "OTHERAMT":
+                        BANKTRANLIST_ITEM.remove(child)
+                    if child.tag == "DTAVAIL":
+                        BANKTRANLIST_ITEM.remove(child)
+
+                name_element = ET.Element('NAME')
+                BANKTRANLIST_ITEM.insert(5, name_element)
 
     string_ofx = ""
     string_ofx += '<?xml version="1.0" encoding="utf-8"?>\n'

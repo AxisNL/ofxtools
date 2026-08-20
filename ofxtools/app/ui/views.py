@@ -6,7 +6,7 @@ from django.core.cache import cache
 from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template import loader
-from . import orco_ofx_to_qbo_ofx, rabo_csv_to_qbo_ofx, mcb_ofx_to_qbo_ofx
+from . import orco_ofx_to_qbo_ofx, rabo_csv_to_qbo_ofx, mcb_ofx_to_qbo_ofx, orcomerch_xlsx_to_qbo_ofx
 
 
 # Create your views here.
@@ -38,6 +38,24 @@ def orco_ofx_to_qbo_ofx_view(request):
         return HttpResponseRedirect(f'/download/{new_id}')
 
     return render(request, 'orco_ofx_to_qbo_ofx.html')
+
+
+def orcomerch_xlsx_to_qbo_ofx_view(request):
+    if request.method == 'POST' and request.FILES['myfile']:
+        myfile = request.FILES['myfile']
+
+        filename = myfile.name
+        myfile_bytes = myfile.read()
+
+        o = orcomerch_xlsx_to_qbo_ofx.convert(filename, myfile_bytes)
+        new_id = uuid.uuid4()
+        cache.set(f"{new_id}_content", o, 600)
+        cache.set(f"{new_id}_filename", filename, 600)
+
+        return HttpResponseRedirect(f'/download/{new_id}')
+
+    return render(request, 'orcomerch_xlsx_to_qbo_ofx.html')
+
 
 
 def mcb_ofx_to_qbo_ofx_view(request):
