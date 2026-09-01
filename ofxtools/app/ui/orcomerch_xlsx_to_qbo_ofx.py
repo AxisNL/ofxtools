@@ -8,6 +8,7 @@ import hashlib
 from django.db import transaction
 
 
+
 def convert(filename, file_bytes):
 
     filename_parts = filename.replace(".xlsx","").split("_")
@@ -21,9 +22,14 @@ def convert(filename, file_bytes):
     file_stream = io.BytesIO(file_bytes)
     file_stream.seek(0)
     xls = pd.ExcelFile(file_stream)
-    df = xls.parse(xls.sheet_names[0], skiprows=0, index_col=None, na_values=['None'])
+    df = xls.parse(None, skiprows=0, index_col=None, na_values=['None'])
 
-    data_dict = df.to_dict('records')
+    transactions_from_xls = []
+    for df_sheet in df.keys():
+        data_dict = df[df_sheet].to_dict('records')
+        for transaction in data_dict:
+            transactions_from_xls.append(transaction)
+
 
     ofx = ET.Element('OFX')
 
@@ -73,10 +79,13 @@ def convert(filename, file_bytes):
         ofx_bankmsgsrsv1_stmttrnnrs_stmtrs_banktranlist, 'DTSTART')
     smallest_transaction_date = 20990101
     largest_transaction_date = 0
-    for transaction in data_dict:
+    for transaction in transactions_from_xls:
 
         tdate = datetime.datetime.strptime(transaction['DATE'],"%m/%d")
-        ttime = datetime.datetime.strptime(transaction['TIME'],"%H:%M:%S")
+        if 'TIME' in transaction.keys():
+            ttime = datetime.datetime.strptime(transaction['TIME'],"%H:%M:%S")
+        else:
+            ttime = datetime.time(0,0,0)
         ttimestamp = datetime.datetime(FILE_DATE.year, tdate.month, tdate.day, ttime.hour, ttime.minute, ttime.second )
 
         if int(ttimestamp.strftime("%Y%m%d")) < smallest_transaction_date:
@@ -88,9 +97,13 @@ def convert(filename, file_bytes):
         ofx_bankmsgsrsv1_stmttrnnrs_stmtrs_banktranlist, 'DTEND')
     ofx_bankmsgsrsv1_stmttrnnrs_stmtrs_banktranlist_dtend.text = str(largest_transaction_date)
 
-    for json_tran in data_dict:
+    for json_tran in transactions_from_xls:
+        print (json.dumps(json_tran, indent=4))
         tdate = datetime.datetime.strptime(json_tran['DATE'], "%m/%d")
-        ttime = datetime.datetime.strptime(json_tran['TIME'], "%H:%M:%S")
+        if 'TIME' in json_tran.keys():
+            ttime = datetime.datetime.strptime(json_tran['TIME'], "%H:%M:%S")
+        else:
+            ttime = datetime.time(0, 0, 0)
         ttimestamp = datetime.datetime(FILE_DATE.year, tdate.month, tdate.day, ttime.hour, ttime.minute, ttime.second)
 
         #print(json.dumps(json_tran, indent=4))
@@ -126,33 +139,60 @@ def convert(filename, file_bytes):
         transaction_name.text = "Card payment"
 
         # Dan de fee
-        if float(json_tran["DISC.\nFEE"]) > 0:
+        if "DISC.\nFEE" in json_tran.keys():
+            if float(json_tran["DISC.\nFEE"]) > 0:
 
-            transaction = ET.SubElement(ofx_bankmsgsrsv1_stmttrnnrs_stmtrs_banktranlist, 'STMTTRN')
-            transaction_trntype = ET.SubElement(transaction, 'TRNTYPE')
-            transaction_trntype.text = "DEBIT"
-            transaction_dtposted = ET.SubElement(transaction, 'DTPOSTED')
-            transaction_dtposted.text = ttimestamp.strftime("%Y%m%d")
+                transaction = ET.SubElement(ofx_bankmsgsrsv1_stmttrnnrs_stmtrs_banktranlist, 'STMTTRN')
+                transaction_trntype = ET.SubElement(transaction, 'TRNTYPE')
+                transaction_trntype.text = "DEBIT"
+                transaction_dtposted = ET.SubElement(transaction, 'DTPOSTED')
+                transaction_dtposted.text = ttimestamp.strftime("%Y%m%d")
 
-            transaction_trnamt = ET.SubElement(transaction, 'TRNAMT')
-            transaction_trnamt.text = f"-{str(json_tran["DISC.\nFEE"])}"
-            transaction_fitid = ET.SubElement(transaction, 'FITID')
-            # transaction_fitid.text = "20231204:9761:3"
+                transaction_trnamt = ET.SubElement(transaction, 'TRNAMT')
+                transaction_trnamt.text = f"-{str(json_tran["DISC.\nFEE"])}"
+                transaction_fitid = ET.SubElement(transaction, 'FITID')
+                # transaction_fitid.text = "20231204:9761:3"
 
-            s = ttimestamp.isoformat() + "fee"
-            hashobj = hashlib.sha256(s.encode('utf-8'))
-            val = int.from_bytes(hashobj.digest(), 'big')
-            val4 = str(val)[:4]
+                s = ttimestamp.isoformat() + "fee"
+                hashobj = hashlib.sha256(s.encode('utf-8'))
+                val = int.from_bytes(hashobj.digest(), 'big')
+                val4 = str(val)[:4]
 
-            transaction_fitid.text = "{0}:{1}:1".format(ttimestamp, val4)
+                transaction_fitid.text = "{0}:{1}:1".format(ttimestamp, val4)
 
-            memo = f"TERMINAL {json_tran['TERMINAL']} BATCH {json_tran['BATCH']} SEQ {json_tran['SEQ']} BANK FEE"
+                memo = f"TERMINAL {json_tran['TERMINAL']} BATCH {json_tran['BATCH']} SEQ {json_tran['SEQ']} BANK FEE"
 
-            transaction_memo = ET.SubElement(transaction, 'MEMO')
-            transaction_memo.text = memo
-            transaction_name = ET.SubElement(transaction, 'NAME')
-            transaction_name.text = "Bank fee"
+                transaction_memo = ET.SubElement(transaction, 'MEMO')
+                transaction_memo.text = memo
+                transaction_name = ET.SubElement(transaction, 'NAME')
+                transaction_name.text = "Bank fee"
 
+        if "DISC FEE\n(XCG)" in json_tran.keys():
+            if float(json_tran["DISC FEE\n(XCG)"]) > 0:
+                transaction = ET.SubElement(ofx_bankmsgsrsv1_stmttrnnrs_stmtrs_banktranlist, 'STMTTRN')
+                transaction_trntype = ET.SubElement(transaction, 'TRNTYPE')
+                transaction_trntype.text = "DEBIT"
+                transaction_dtposted = ET.SubElement(transaction, 'DTPOSTED')
+                transaction_dtposted.text = ttimestamp.strftime("%Y%m%d")
+
+                transaction_trnamt = ET.SubElement(transaction, 'TRNAMT')
+                transaction_trnamt.text = f"-{str(json_tran["DISC FEE\n(XCG)"])}"
+                transaction_fitid = ET.SubElement(transaction, 'FITID')
+                # transaction_fitid.text = "20231204:9761:3"
+
+                s = ttimestamp.isoformat() + "fee"
+                hashobj = hashlib.sha256(s.encode('utf-8'))
+                val = int.from_bytes(hashobj.digest(), 'big')
+                val4 = str(val)[:4]
+
+                transaction_fitid.text = "{0}:{1}:1".format(ttimestamp, val4)
+
+                memo = f"TERMINAL {json_tran['TERMINAL']} BATCH {json_tran['BATCH']} SEQ {json_tran['SEQ']} BANK FEE"
+
+                transaction_memo = ET.SubElement(transaction, 'MEMO')
+                transaction_memo.text = memo
+                transaction_name = ET.SubElement(transaction, 'NAME')
+                transaction_name.text = "Bank fee"
 
     # ofx_bankmsgsrsv1_stmttrnnrs_stmtrs_ledgerbal = ET.SubElement(ofx_bankmsgsrsv1_stmttrnnrs_stmtrs, 'LEDGERBAL')
     # ofx_bankmsgsrsv1_stmttrnnrs_stmtrs_ledgerbal_balamt = ET.SubElement(ofx_bankmsgsrsv1_stmttrnnrs_stmtrs_ledgerbal,
